@@ -1,8 +1,10 @@
-import React, { useState } from 'react'
-import { FaCircle } from 'react-icons/fa'
+import React, { useEffect, useState } from 'react'
+
 import { Game, Position, Wall as WallType } from '../types/game'
-import { getPossibleMoves } from '../utils/game_engine'
-import { isWallInBetween } from '../utils/wall_utils'
+import { GameEngineImpl } from '../utils/game_engine'
+
+import Cell from './Cell'
+import Wall from './Wall'
 
 interface BoardProps {
 	gameState: Game
@@ -10,69 +12,19 @@ interface BoardProps {
 	onPlaceWall: (userId: string, wall: WallType) => void
 }
 
-interface CellProps {
-	x: number
-	y: number
-	isPlayer1: boolean
-	isPlayer2: boolean
-	isPossibleMove: boolean
-	onCellClick: () => void
-	onPlayerClick: () => void
-}
-
-interface WallProps {
-	direction: 'horizontal' | 'vertical'
-	pos1: Position
-	pos2: Position
-	isWall: boolean
-	onPlaceWall: () => void
-}
-
-const Cell: React.FC<CellProps> = ({
-	isPlayer1,
-	isPlayer2,
-	isPossibleMove,
-	onCellClick,
-	onPlayerClick,
-}) => (
-	<div
-		className={`h-14 w-14 flex justify-center items-center rounded-sm border border-gray-1700 relative
-            ${isPossibleMove ? 'bg-green-300' : 'bg-white'}`}
-		onClick={onCellClick}
-	>
-		{(isPlayer1 || isPlayer2) && (
-			<div
-				className={`player${isPlayer1 ? '1' : '2'} bg-transparent`}
-				onMouseDown={onPlayerClick}
-			>
-				<FaCircle
-					className={`w-10 h-10 text-${
-						isPlayer1 ? 'blue' : 'red'
-					}-500`}
-				/>
-			</div>
-		)}
-	</div>
-)
-
-const Wall: React.FC<WallProps> = ({ direction, isWall, onPlaceWall }) => (
-	<div
-		className={`
-            ${direction === 'vertical' ? 'w-2 h-14' : 'h-2 w-14'}
-            ${isWall ? 'bg-purple-500' : 'bg-transparent cursor-pointer'}
-        `}
-		onClick={!isWall ? onPlaceWall : undefined}
-	/>
-)
-
 const Board: React.FC<BoardProps> = ({ gameState, onMove, onPlaceWall }) => {
+	const gameEngine = new GameEngineImpl()
+
 	const [activePlayer, setActivePlayer] = useState<string>('')
 	const [possibleMoves, setPossibleMoves] = useState<Position[]>([])
+	const [hoveredWall, setHoveredWall] = useState<WallType | null>()
 
 	const handlePlayerClick = (playerId: string): void => {
 		if (activePlayer === '') {
-			const possibleMoves = getPossibleMoves(gameState, playerId)
-			console.log(possibleMoves)
+			const possibleMoves = gameEngine.getPossibleMoves(
+				gameState,
+				playerId
+			)
 			setPossibleMoves(possibleMoves)
 			setActivePlayer(playerId)
 		} else {
@@ -93,22 +45,38 @@ const Board: React.FC<BoardProps> = ({ gameState, onMove, onPlaceWall }) => {
 		}
 	}
 
-	const isWallPlaced = (
-		pos1: Position,
-		pos2: Position,
-		direction: 'horizontal' | 'vertical'
-	) =>
-		gameState.walls.some((wall) =>
-			isWallInBetween(wall, pos1, pos2, direction)
+	const handleWallPlaceholderHover = (wall: WallType) => {
+		if (
+			activePlayer === '' &&
+			gameEngine.isWallPlacementValid(gameState, wall)
+		) {
+			setHoveredWall(wall)
+		}
+	}
+
+	const handleWallPlacement = (wall: WallType) => {
+		if (
+			activePlayer === '' &&
+			gameEngine.isWallPlacementValid(gameState, wall)
+		) {
+			onPlaceWall(activePlayer, wall)
+		}
+	}
+
+	const isWallPlaced = (wall: WallType) =>
+		gameState.walls.some((existing) =>
+			gameEngine.isWallInBetween(existing, wall)
 		)
 
 	const renderCell = (x: number, y: number) => {
 		const isPlayer1 =
 			gameState.player_1.position.x === x &&
 			gameState.player_1.position.y === y
+
 		const isPlayer2 =
 			gameState.player_2.position.x === x &&
 			gameState.player_2.position.y === y
+
 		const isPossibleMove = possibleMoves.some(
 			(pos) => pos.x === x && pos.y === y
 		)
@@ -138,16 +106,29 @@ const Board: React.FC<BoardProps> = ({ gameState, onMove, onPlaceWall }) => {
 		const pos1: Position = { x, y }
 		const pos2: Position =
 			direction === 'vertical' ? { x: x + 1, y } : { x, y: y + 1 }
-		const isWall = isWallPlaced(pos1, pos2, direction)
+
+		const wall: WallType = {
+			direction: direction,
+			position_1: pos1,
+			position_2: pos2,
+		}
+
+		const isWall = isWallPlaced(wall)
+
+		let isHovered = false
+		if (hoveredWall) {
+			isHovered = gameEngine.isWallInBetween(hoveredWall!, wall)
+		}
 
 		return (
 			<Wall
 				key={`${direction}-${x}-${y}`}
-				direction={direction}
-				pos1={pos1}
-				pos2={pos2}
+				wall={wall}
 				isWall={isWall}
-				onPlaceWall={() => {}}
+				isHovered={isHovered}
+				onPlaceWall={handleWallPlacement}
+				onHover={handleWallPlaceholderHover}
+				onHoverEnd={() => setHoveredWall(null)}
 			/>
 		)
 	}
