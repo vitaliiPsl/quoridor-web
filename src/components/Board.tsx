@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 
 import { Game, Position, Wall as WallType } from '../types/game'
 import { GameEngineImpl } from '../utils/game_engine'
@@ -7,59 +7,53 @@ import Cell from './Cell'
 import Wall from './Wall'
 
 interface BoardProps {
+	playerId: string
 	gameState: Game
-	onMove: (userId: string, position: Position) => void
-	onPlaceWall: (userId: string, wall: WallType) => void
+	onMove: (position: Position) => void
+	onPlaceWall: (wall: WallType) => void
 }
 
-const Board: React.FC<BoardProps> = ({ gameState, onMove, onPlaceWall }) => {
+const Board: React.FC<BoardProps> = ({
+	playerId,
+	gameState,
+	onMove,
+	onPlaceWall,
+}) => {
 	const gameEngine = new GameEngineImpl()
 
-	const [activePlayer, setActivePlayer] = useState<string>('')
+	const [active, setActive] = useState<boolean>(false)
 	const [possibleMoves, setPossibleMoves] = useState<Position[]>([])
 	const [hoveredWall, setHoveredWall] = useState<WallType | null>()
 
-	const handlePlayerClick = (playerId: string): void => {
-		if (activePlayer === '') {
-			const possibleMoves = gameEngine.getPossibleMoves(
-				gameState,
-				playerId
-			)
+	const handlePlayerClick = (): void => {
+		if (!active) {
+			const possibleMoves = gameEngine.getPossibleMoves(gameState, playerId)
 			setPossibleMoves(possibleMoves)
-			setActivePlayer(playerId)
+			setActive(true)
 		} else {
 			setPossibleMoves([])
-			setActivePlayer('')
+			setActive(false)
 		}
 	}
 
 	const handleCellClick = (x: number, y: number) => {
 		const position: Position = { x: x, y: y }
-		if (
-			activePlayer !== '' &&
-			possibleMoves.some((pos) => pos.x === x && pos.y === y)
-		) {
-			onMove(activePlayer, position)
+		if (active && gameEngine.isMoveValid(gameState, playerId, position)) {
+			onMove(position)
 			setPossibleMoves([])
-			setActivePlayer('')
+			setActive(false)
 		}
 	}
 
 	const handleWallPlaceholderHover = (wall: WallType) => {
-		if (
-			activePlayer === '' &&
-			gameEngine.isWallPlacementValid(gameState, wall)
-		) {
+		if (!active && gameEngine.isWallPlacementValid(gameState, wall)) {
 			setHoveredWall(wall)
 		}
 	}
 
 	const handleWallPlacement = (wall: WallType) => {
-		if (
-			activePlayer === '' &&
-			gameEngine.isWallPlacementValid(gameState, wall)
-		) {
-			onPlaceWall(activePlayer, wall)
+		if (!active && gameEngine.isWallPlacementValid(gameState, wall)) {
+			onPlaceWall(wall)
 		}
 	}
 
@@ -91,8 +85,8 @@ const Board: React.FC<BoardProps> = ({ gameState, onMove, onPlaceWall }) => {
 				isPossibleMove={isPossibleMove}
 				onCellClick={() => handleCellClick(x, y)}
 				onPlayerClick={() => {
-					if (isPlayer1) handlePlayerClick(gameState.player_1.user_id)
-					if (isPlayer2) handlePlayerClick(gameState.player_2.user_id)
+					if (isPlayer1 && gameState.player_1.user_id === playerId) handlePlayerClick()
+					if (isPlayer2 && gameState.player_2.user_id === playerId) handlePlayerClick()
 				}}
 			/>
 		)
@@ -104,8 +98,7 @@ const Board: React.FC<BoardProps> = ({ gameState, onMove, onPlaceWall }) => {
 		direction: 'horizontal' | 'vertical'
 	) => {
 		const pos1: Position = { x, y }
-		const pos2: Position =
-			direction === 'vertical' ? { x: x + 1, y } : { x, y: y + 1 }
+		const pos2: Position = direction === 'vertical' ? { x: x + 1, y } : { x, y: y + 1 }
 
 		const wall: WallType = {
 			direction: direction,
