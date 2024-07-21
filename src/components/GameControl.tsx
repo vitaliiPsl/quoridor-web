@@ -31,12 +31,6 @@ const GameControl: React.FC<GameControlProps> = ({ gameState, onResign }) => {
 		)
 	}
 
-	const getPlayerColor = (playerId: string) => {
-		if (playerId === gameState.player_1.user_id) return 'Blue'
-		if (playerId === gameState.player_2.user_id) return 'Red'
-		return 'Unknown'
-	}
-
 	const renderGameStatus = () => {
 		if (gameState.winner) {
 			const winnerColor =
@@ -57,9 +51,9 @@ const GameControl: React.FC<GameControlProps> = ({ gameState, onResign }) => {
 	}
 
 	return (
-		<div className='p-4 min-w-80 h-full flex flex-col gap-4 bg-white rounded-md text-zinc-800'>
+		<div className='p-4 min-w-80 min-h-80 max-h-148 flex flex-col gap-4 bg-white rounded-md text-zinc-800'>
 			<div className='flex items-center gap-2'>{renderGameStatus()}</div>
-			<div className='p-4 flex-1 flex flex-col bg-[#f1f1f1] border border-zinc-800 rounded-md overflow-y-auto'>
+			<div className='p-4 flex-1 flex flex-col bg-[#f1f1f1] border border-zinc-800 rounded-md overflow-y'>
 				<div className='flex-1 flex flex-col'>
 					{gameState.moves?.length === 0 && (
 						<div className='flex-1 flex justify-center items-center'>

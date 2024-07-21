@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react'
-
 import { useWebsocket } from '../providers/WebsocketProvider'
 import { Game, Position, Wall } from '../types/game'
-
 import Board from '../components/Board'
 import StartGameForm from '../components/StartGameForm'
 import GameSearch from '../components/GameSearch'
@@ -86,34 +84,40 @@ const GamePage: React.FC = () => {
 	})
 
 	return (
-		<div className='flex flex-col items-center'>
+		<div className='h-full w-full p-8 flex flex-col items-center overflow-y-auto'>
 			{!searching && !gameState && (
 				<StartGameForm onSubmit={startGame} setUserId={setUserId} />
 			)}
+
 			{searching && !gameState && (
 				<GameSearch onCancel={handleDisconnect} />
 			)}
+
 			{gameState && (
-				<div className='flex flex-col items-center gap-2 text-white'>
-					<PlayerDetails
-						userId={gameState.player_1.user_id}
-						walls={gameState.player_1.walls}
-						color='blue'
-					/>
-					<div className='board-section flex gap-4'>
-						<Board
-							playerId={userId}
-							gameState={gameState}
-							onMove={makeMove}
-							onPlaceWall={placeWall}
+				<div className='p-4 flex flex-col lg:flex-row gap-8'>
+					<div className='game-board flex flex-col items-center gap-2 text-white'>
+						<PlayerDetails
+							userId={gameState.player_1.user_id}
+							walls={gameState.player_1.walls}
+							color='blue'
 						/>
+						<div className='board-section flex flex-col lg:flex-row gap-4'>
+							<Board
+								playerId={userId}
+								gameState={gameState}
+								onMove={makeMove}
+								onPlaceWall={placeWall}
+							/>
+						</div>
+						<PlayerDetails
+							userId={gameState.player_2.user_id}
+							walls={gameState.player_2.walls}
+							color='red'
+						/>
+					</div>
+					<div className='game-control lg:pt-12'>
 						<GameControl gameState={gameState} onResign={resign} />
 					</div>
-					<PlayerDetails
-						userId={gameState.player_2.user_id}
-						walls={gameState.player_2.walls}
-						color='red'
-					/>
 				</div>
 			)}
 		</div>
