@@ -6,6 +6,7 @@ import { Game, Position, Wall } from '../types/game'
 import { FaCircle } from 'react-icons/fa'
 import Board from '../components/Board'
 import StartGameForm from '../components/StartGameForm'
+import GameSearch from '../components/GameSearch'
 
 const GamePage: React.FC = () => {
 	const { connect, sendMessage, onMessage } = useWebsocket()
@@ -35,6 +36,7 @@ const GamePage: React.FC = () => {
 
 	const handleDisconnect = () => {
 		console.log('Disconnected!')
+		setSearching(false)
 	}
 
 	const makeMove = (position: Position) => {
@@ -75,6 +77,10 @@ const GamePage: React.FC = () => {
 		<div className='flex flex-col items-center'>
 			{!searching && !gameState && (
 				<StartGameForm onSubmit={startGame} setUserId={setUserId} />
+			)}
+
+			{searching && !gameState && (
+				<GameSearch onCancel={handleDisconnect} />
 			)}
 
 			{gameState && (
