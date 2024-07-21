@@ -1,25 +1,31 @@
 import React, { useEffect, useState } from 'react'
+
 import { useWebsocket } from '../providers/WebsocketProvider'
 import { Game, Position, Wall } from '../types/game'
-import Board from '../components/Board'
+
 import { FaCircle } from 'react-icons/fa'
+import Board from '../components/Board'
+import StartGameForm from '../components/StartGameForm'
 
 const GamePage: React.FC = () => {
-	const { connect, disconnect, sendMessage, onMessage } = useWebsocket()
+	const { connect, sendMessage, onMessage } = useWebsocket()
 
 	const [userId, setUserId] = useState('')
 	const [gameId, setGameId] = useState('')
 	const [gameState, setGameState] = useState<Game | null>(null)
+	const [searching, setSearching] = useState(false)
 
 	useEffect(() => {
 		if (gameState != null) {
 			setGameId(gameState.game_id)
+			setSearching(false)
 		}
 	}, [gameState])
 
 	const startGame = (e: React.FormEvent) => {
 		e.preventDefault()
 		connect(userId, handleConnect, handleDisconnect)
+		setSearching(true)
 	}
 
 	const handleConnect = () => {
@@ -67,21 +73,10 @@ const GamePage: React.FC = () => {
 
 	return (
 		<div className='flex flex-col items-center'>
-			<form onSubmit={startGame} className='game-control flex gap-2 mb-4'>
-				<input
-					type='text'
-					required
-					placeholder='User ID'
-					className='text-black px-4 py-2 rounded'
-					onChange={(e) => setUserId(e.target.value)}
-				/>
-				<button
-					type='submit'
-					className='bg-blue-500 text-white px-4 py-2 rounded'
-				>
-					Start Game
-				</button>
-			</form>
+			{!searching && !gameState && (
+				<StartGameForm onSubmit={startGame} setUserId={setUserId} />
+			)}
+
 			{gameState && (
 				<div className='flex flex-col items-center gap-2 text-white'>
 					<div className='w-full p-2 flex justify-between'>
