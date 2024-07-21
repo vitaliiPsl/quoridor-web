@@ -3,10 +3,10 @@ import React, { useEffect, useState } from 'react'
 import { useWebsocket } from '../providers/WebsocketProvider'
 import { Game, Position, Wall } from '../types/game'
 
-import { FaCircle } from 'react-icons/fa'
 import Board from '../components/Board'
 import StartGameForm from '../components/StartGameForm'
 import GameSearch from '../components/GameSearch'
+import PlayerDetails from '../components/PlayerDetails'
 
 const GamePage: React.FC = () => {
 	const { connect, sendMessage, onMessage } = useWebsocket()
@@ -85,40 +85,22 @@ const GamePage: React.FC = () => {
 
 			{gameState && (
 				<div className='flex flex-col items-center gap-2 text-white'>
-					<div className='w-full p-2 flex justify-between'>
-						<div className='text-center flex gap-2 items-center'>
-							<FaCircle className='w-6 h-6 text-blue-500' />
-							<p>{gameState.player_1.user_id}</p>
-						</div>
-
-						{gameState.turn == gameState.player_1.user_id && (
-							<div>Blue to move</div>
-						)}
-
-						<div className=''>
-							<p>Walls left: {gameState.player_1.walls}</p>
-						</div>
-					</div>
+					<PlayerDetails
+						userId={gameState.player_1.user_id}
+						walls={gameState.player_1.walls}
+						color='blue'
+					/>
 					<Board
 						playerId={userId}
 						gameState={gameState}
 						onMove={makeMove}
 						onPlaceWall={placeWall}
 					/>
-					<div className='w-full p-2 flex justify-between'>
-						<div className='text-center flex gap-2 items-center'>
-							<FaCircle className='w-6 h-6 text-red-500' />
-							<p>{gameState.player_2.user_id}</p>
-						</div>
-
-						{gameState.turn == gameState.player_2.user_id && (
-							<div>Red to move</div>
-						)}
-
-						<div className=''>
-							<p>Walls left: {gameState.player_2.walls}</p>
-						</div>
-					</div>
+					<PlayerDetails
+						userId={gameState.player_2.user_id}
+						walls={gameState.player_2.walls}
+						color='red'
+					/>
 				</div>
 			)}
 		</div>
