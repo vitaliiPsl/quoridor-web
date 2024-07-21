@@ -7,10 +7,10 @@ import Board from '../components/Board'
 import StartGameForm from '../components/StartGameForm'
 import GameSearch from '../components/GameSearch'
 import PlayerDetails from '../components/PlayerDetails'
+import GameControl from '../components/GameControl'
 
 const GamePage: React.FC = () => {
 	const { connect, sendMessage, onMessage } = useWebsocket()
-
 	const [userId, setUserId] = useState('')
 	const [gameId, setGameId] = useState('')
 	const [gameState, setGameState] = useState<Game | null>(null)
@@ -41,7 +41,7 @@ const GamePage: React.FC = () => {
 
 	const makeMove = (position: Position) => {
 		console.log('Making a move')
-		if (gameState?.turn === userId) {
+		if (gameState?.status === 'in_progress' && gameState?.turn === userId) {
 			sendMessage({
 				event: 'make_move',
 				payload: {
@@ -54,12 +54,24 @@ const GamePage: React.FC = () => {
 
 	const placeWall = (wall: Wall) => {
 		console.log('Placing a wall')
-		if (gameState?.turn === userId) {
+		if (gameState?.status === 'in_progress' && gameState?.turn === userId) {
 			sendMessage({
 				event: 'place_wall',
 				payload: {
 					game_id: gameId,
 					wall: wall,
+				},
+			})
+		}
+	}
+
+	const resign = () => {
+		console.log('Resigning')
+		if (gameState) {
+			sendMessage({
+				event: 'resign',
+				payload: {
+					game_id: gameId,
 				},
 			})
 		}
@@ -78,11 +90,9 @@ const GamePage: React.FC = () => {
 			{!searching && !gameState && (
 				<StartGameForm onSubmit={startGame} setUserId={setUserId} />
 			)}
-
 			{searching && !gameState && (
 				<GameSearch onCancel={handleDisconnect} />
 			)}
-
 			{gameState && (
 				<div className='flex flex-col items-center gap-2 text-white'>
 					<PlayerDetails
@@ -90,12 +100,15 @@ const GamePage: React.FC = () => {
 						walls={gameState.player_1.walls}
 						color='blue'
 					/>
-					<Board
-						playerId={userId}
-						gameState={gameState}
-						onMove={makeMove}
-						onPlaceWall={placeWall}
-					/>
+					<div className='board-section flex gap-4'>
+						<Board
+							playerId={userId}
+							gameState={gameState}
+							onMove={makeMove}
+							onPlaceWall={placeWall}
+						/>
+						<GameControl gameState={gameState} onResign={resign} />
+					</div>
 					<PlayerDetails
 						userId={gameState.player_2.user_id}
 						walls={gameState.player_2.walls}
